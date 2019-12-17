@@ -40,8 +40,8 @@ namespace CoffeeShop.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"SELECT c.Id as CohortId, c.Name as CohortName, i.Id as InstructorId, 
-                                        i.FirstName as InstructorFirstName, i.LastName as InstructoLastName, 
-                                        i.Specialty as InstructorSpecialty, i.SlackHandle as InstructorSlack, 
+                                        i.FirstName as InstructorFirstName, i.LastName as InstructorLastName, 
+                                        i.Specialty, i.SlackHandle as InstructorSlack, 
                                         i.CohortId as InstructorCohortId, s.Id, s.FirstName as StudentFirstName, 
                                         s.LastName as StudentLastName, s.SlackHandle as StudentSlack, 
                                         s.CohortId as StudentCohortId
@@ -53,63 +53,66 @@ namespace CoffeeShop.Controllers
 
                     while (reader.Read())
                     {
-                        int currentCohortID = reader.GetInt32(reader.GetOrdinal("CohortID"));
-                        Cohort newCohort = cohorts.FirstOrDefault(i => i.Id == currentCohortID);
-                        //If there's no cohort, create one and add it to the list.
-                        if (newCohort == null)
-
-                            newCohort = new Cohort
+                        Cohort newCohort = null;
+                        int cohortId = reader.GetInt32(reader.GetOrdinal("CohortId"));
+                        if (!cohorts.Any(c => c.Id == cohortId))
+                        {
+                            newCohort = new Cohort()
                             {
-                                Id = currentCohortID,
-                                Name = reader.GetString(reader.GetOrdinal("CohortName")),
-                                Student = new List<Student>(),
-                                instructors = new List<Instructor>()
-
+                                Id = cohortId,
+                                Name = reader.GetString(reader.GetOrdinal("CohortName"))
                             };
 
-                        cohorts.Add(newCohort);
+                            cohorts.Add(newCohort);
+                        }
+
+                        Cohort existingCohort = cohorts.Find(c => c.Id == cohortId);
+                        if (!reader.IsDBNull(reader.GetOrdinal("Id")))
+                        {
+                            int studentId = reader.GetInt32(reader.GetOrdinal("Id"));
+                            if (!existingCohort.Student.Any(s => s.Id == studentId))
+                            {
+                                Student newStudent = new Student()
+                                {
+                                    Id = studentId,
+                                    FirstName = reader.GetString(reader.GetOrdinal("StudentFirstName")),
+                                    LastName = reader.GetString(reader.GetOrdinal("StudentLastName")),
+                                    SlackHandle = reader.GetString(reader.GetOrdinal("StudentSlack")),
+                                    CohortId = reader.GetInt32(reader.GetOrdinal("StudentCohortId")),
+
+                                };
+                                existingCohort.Student.Add(newStudent);
+                            };
+                        }
+
+                        if (!reader.IsDBNull(reader.GetOrdinal("InstructorId")))
+                        {
+                            int instructorId = reader.GetInt32(reader.GetOrdinal("InstructorId"));
+                            if (!existingCohort.instructors.Any(i => i.Id == instructorId))
+                            {
+                                Instructor newInstructor = new Instructor()
+                                {
+                                    Id = instructorId,
+                                    FirstName = reader.GetString(reader.GetOrdinal("InstructorFirstName")),
+                                    LastName = reader.GetString(reader.GetOrdinal("InstructorLastName")),
+                                    Specialty = reader.GetString(reader.GetOrdinal("Specialty")),
+                                    SlackHandle = reader.GetString(reader.GetOrdinal("InstructorSlack")),
+                                    CohortId = reader.GetInt32(reader.GetOrdinal("InstructorCohortId"))
+                                };
+                                existingCohort.instructors.Add(newInstructor);
+                            };
+                        }
                     }
                     reader.Close();
 
                     return Ok(cohorts);
+
                 }
+
             }
         }
 
-        //[HttpGet("{id}", Name = "GetEmployee")]
-        //public async Task<IActionResult> Get([FromRoute] int id)
-        //{
-        //    using (SqlConnection conn = Connection)
-        //    {
-        //        conn.Open();
-        //        using (SqlCommand cmd = conn.CreateCommand())
-        //        {
-        //            cmd.CommandText = @"
-        //                SELECT
-        //                    Id, FirstName, LastName, DepartmentId
-        //                FROM Employee
-        //                WHERE Id = @id";
-        //            cmd.Parameters.Add(new SqlParameter("@id", id));
-        //            SqlDataReader reader = cmd.ExecuteReader();
-
-        //            Employee employee = null;
-
-        //            if (reader.Read())
-        //            {
-        //                employee = new Employee
-        //                {
-        //                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
-        //                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-        //                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
-        //                    DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
-
-        //                };
-        //            }
-        //            reader.Close();
-
-        //            return Ok(employee);
-        //        }
-        //    }
-        //}
     }
 }
+
+      
