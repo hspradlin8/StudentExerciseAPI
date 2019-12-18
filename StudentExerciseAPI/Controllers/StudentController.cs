@@ -31,7 +31,7 @@ namespace StudentExerciseAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery]int Id, string include)
+        public async Task<IActionResult> Get([FromQuery]int Id, string include, string q)
         {
             using (SqlConnection conn = Connection)
             {
@@ -44,12 +44,14 @@ namespace StudentExerciseAPI.Controllers
                     if (include !=null)
                     
                     {
-                        cmd.CommandText = @"SELECT s.Id, s.FirstName, s.LastName, s.SlackHandle, s.CohortId, e.Id AS ExerciseId, e.Name AS ExerciseName, e.Language, c.[Name] AS CohortName, c.Id AS CoId
+                        cmd.CommandText = @"SELECT s.Id, s.FirstName, s.LastName, s.SlackHandle, s.CohortId, 
+                                        e.Id AS ExerciseId, e.Name AS ExerciseName, e.Language, 
+                                        c.[Name] AS CohortName, c.Id AS CoId
                                         FROM Student s
                                         LEFT JOIN Cohort c ON s.CohortId = c.Id
                                         INNER JOIN  StudentExercise se ON se.StudentId = s.Id
-                                        INNER JOIN Exercise e ON e.Id = se.ExerciseId";
-
+                                        INNER JOIN Exercise e ON e.Id = se.ExerciseId
+                                        WHERE 1 = 1";
                     }else
                     {
                         cmd.CommandText = @"SELECT s.Id, s.FirstName, s.LastName, s.SlackHandle, s.CohortId, c.Id AS CoId, c.Name AS CohortName 
