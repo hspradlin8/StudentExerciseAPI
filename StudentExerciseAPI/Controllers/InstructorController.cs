@@ -31,16 +31,18 @@ namespace StudentExerciseAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery]string q)
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT i.Id, i.FirstName, i.LastName, i.SlackHandle, i.CohortId, i.Specialty, c.Name, c.Id AS CoId
+                    cmd.CommandText = @"SELECT i.Id, i.FirstName, i.LastName, i.SlackHandle, 
+                                        i.CohortId, i.Specialty, c.Name, c.Id AS CoId
                                         FROM Instructor i
-                                        INNER JOIN Cohort c ON c.Id = CohortId";
+                                        INNER JOIN Cohort c ON c.Id = CohortId
+                                        WHERE Instructor LIKE q";
                     SqlDataReader reader = cmd.ExecuteReader();
                     List<Instructor> instructors = new List<Instructor>();
 

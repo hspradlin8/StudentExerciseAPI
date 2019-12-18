@@ -32,7 +32,7 @@ namespace CoffeeShop.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery]string q)
         {
             using (SqlConnection conn = Connection)
             {
@@ -47,7 +47,8 @@ namespace CoffeeShop.Controllers
                                         s.CohortId as StudentCohortId
                                         FROM Cohort c
                                         LEFT JOIN Student s ON c.Id = s.Id
-                                        LEFT JOIN Instructor i ON c.Id = i.CohortId";
+                                        LEFT JOIN Instructor i ON c.Id = i.CohortId
+                                        WHERE Cohort LIKE q";
                     SqlDataReader reader = cmd.ExecuteReader();
                     List<Cohort> cohorts = new List<Cohort>();
 

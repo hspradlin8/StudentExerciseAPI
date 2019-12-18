@@ -63,7 +63,7 @@ namespace StudentExerciseAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery]int Id, string include)
+        public async Task<IActionResult> Get([FromQuery]int Id, string include, string q)
         {
             using (SqlConnection conn = Connection)
             {
@@ -79,16 +79,16 @@ namespace StudentExerciseAPI.Controllers
                         cmd.CommandText = @"SELECT s.FirstName, s.LastName, s.Id, se.Id, se.StudentId, se.ExerciseId, e.[Name], e.Id, e.[Language]
                                             FROM StudentExercise se
                                             LEFT JOIN Student s ON s.Id = se.StudentId
-                                            LEFT JOIN Exercise e ON e.Id = se.ExerciseId;";
-
-                    }
+                                            LEFT JOIN Exercise e ON e.Id = se.ExerciseId
+                                            WHERE 1=1";
+    }
                     else
                     {
                         //does not include students 
                         cmd.CommandText = @"SELECT  se.Id, se.StudentId, se.ExerciseId, e.[Name], e.Id, e.[Language]
                                             FROM StudentExercise se
-                                            LEFT JOIN Exercise e ON e.Id = se.ExerciseId;";
-
+                                            LEFT JOIN Exercise e ON e.Id = se.ExerciseId";
+                                            
                     }
                     SqlDataReader reader = cmd.ExecuteReader();
 
@@ -98,7 +98,7 @@ namespace StudentExerciseAPI.Controllers
 
                     while (reader.Read())
                     {
-                        if (include != null)
+                        if (include != null) 
                         {
                             Student student = new Student
                             {
