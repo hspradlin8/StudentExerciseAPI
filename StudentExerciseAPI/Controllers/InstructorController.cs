@@ -31,7 +31,7 @@ namespace StudentExerciseAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery]string q)
+        public async Task<IActionResult> Get([FromQuery]string FirstName, string LastName, string SlackHandle)
         {
             using (SqlConnection conn = Connection)
             {
@@ -41,8 +41,27 @@ namespace StudentExerciseAPI.Controllers
                     cmd.CommandText = @"SELECT i.Id, i.FirstName, i.LastName, i.SlackHandle, 
                                         i.CohortId, i.Specialty, c.Name, c.Id AS CoId
                                         FROM Instructor i
-                                        INNER JOIN Cohort c ON c.Id = CohortId
-                                        WHERE Instructor LIKE q";
+                                        INNER JOIN Cohort c ON c.Id = CohortId";
+
+                    if (FirstName != null)
+                    {
+                        cmd.CommandText += " AND FirstName LIKE @FirstName";
+                        cmd.Parameters.Add(new SqlParameter("@FirstName", "%" + FirstName + "%"));
+                    }
+
+                    if (LastName != null)
+                    {
+                        cmd.CommandText += " AND LastName LIKE @LastName";
+                        cmd.Parameters.Add(new SqlParameter("@LastName", "%" + LastName + "%"));
+                    }
+
+                    if (SlackHandle != null)
+                    {
+                        cmd.CommandText += " AND SlackHandle LIKE @SlackHandle";
+                        cmd.Parameters.Add(new SqlParameter("@SlackHandle", "%" + SlackHandle + "%"));
+                    }
+
+
                     SqlDataReader reader = cmd.ExecuteReader();
                     List<Instructor> instructors = new List<Instructor>();
 

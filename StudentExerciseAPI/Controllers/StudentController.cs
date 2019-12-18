@@ -31,18 +31,17 @@ namespace StudentExerciseAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery]int Id, string include, string q)
+        public async Task<IActionResult> Get([FromQuery]string FirstName, string LastName, string SlackHandle)
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    
+
                     List<Student> students = new List<Student>();
-                    // if they are looking for exercises
-                    if (include !=null)
                     
+
                     {
                         cmd.CommandText = @"SELECT s.Id, s.FirstName, s.LastName, s.SlackHandle, s.CohortId, 
                                         e.Id AS ExerciseId, e.Name AS ExerciseName, e.Language, 
@@ -52,21 +51,96 @@ namespace StudentExerciseAPI.Controllers
                                         INNER JOIN  StudentExercise se ON se.StudentId = s.Id
                                         INNER JOIN Exercise e ON e.Id = se.ExerciseId
                                         WHERE 1 = 1";
-                    }else
+                   
+                  
+                    }
+
+                    if (FirstName != null)
+                    {
+                        cmd.CommandText += " AND FirstName LIKE @FirstName";
+                        cmd.Parameters.Add(new SqlParameter("@FirstName", "%" + FirstName + "%"));
+                    }
+
+                    if (LastName != null)
+                    {
+                        cmd.CommandText += " AND LastName LIKE @LastName";
+                        cmd.Parameters.Add(new SqlParameter("@LastName", "%" + LastName + "%"));
+                    }
+
+                    if (SlackHandle != null)
+                    {
+                        cmd.CommandText += " AND SlackHandle LIKE @SlackHandle";
+                        cmd.Parameters.Add(new SqlParameter("@SlackHandle", "%" + SlackHandle + "%"));
+                    }
+
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    while (reader.Read())
+                    {
+                        Student student = new Student
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                            SlackHandle = reader.GetString(reader.GetOrdinal("SlackHandle")),
+                            CohortId = reader.GetInt32(reader.GetOrdinal("CohortId")),
+                            Cohort = new Cohort
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("CoId")),
+                                Name = reader.GetString(reader.GetOrdinal("Name"))
+                            }
+
+                        };
+
+                        students.Add(student);
+                    }
+                    reader.Close();
+
+                    return Ok(students);
+                }
+            }
+        }
+
+        [HttpGet("{id}", Name = "GetStudent")]
+        public async Task<IActionResult> Get([FromRoute]int Id, string include)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+
+                    List<Student> students = new List<Student>();
+                    // if they are looking for exercises
+                    if (include != null)
+
+                    {
+                        cmd.CommandText = @"SELECT s.Id, s.FirstName, s.LastName, s.SlackHandle, s.CohortId, 
+                                        e.Id AS ExerciseId, e.Name AS ExerciseName, e.Language, 
+                                        c.[Name] AS CohortName, c.Id AS CoId
+                                        FROM Student s
+                                        LEFT JOIN Cohort c ON s.CohortId = c.Id
+                                        INNER JOIN  StudentExercise se ON se.StudentId = s.Id
+                                        INNER JOIN Exercise e ON e.Id = se.ExerciseId";
+
+                    }
+                    else
                     {
                         cmd.CommandText = @"SELECT s.Id, s.FirstName, s.LastName, s.SlackHandle, s.CohortId, c.Id AS CoId, c.Name AS CohortName 
                                         FROM Student s
                                         LEFT JOIN  Cohort c ON s.CohortId = c.Id";
-                                       
+
                     }
+
+
                     SqlDataReader reader = cmd.ExecuteReader();
 
                     //List<Exercise> this is where we are storing all of the exercises from the sql statement
-                   
+
 
                     while (reader.Read())
                     {
-                    List<Exercise> exercises = new List<Exercise>();
+                        List<Exercise> exercises = new List<Exercise>();
                         if (include != null)
                         {
                             Exercise exercise = new Exercise
@@ -103,7 +177,7 @@ namespace StudentExerciseAPI.Controllers
 
                     return Ok(students);
                 }
-            } 
+            }
         }
 
     }
