@@ -59,7 +59,7 @@ namespace StudentExerciseAPI.Controllers
                     }
                     SqlDataReader reader = cmd.ExecuteReader();
 
-                    //this is where we are storing all of the exercises from the sql statement
+                    //List<Exercise> this is where we are storing all of the exercises from the sql statement
                    
 
                     while (reader.Read())
@@ -101,7 +101,7 @@ namespace StudentExerciseAPI.Controllers
 
                     return Ok(students);
                 }
-            }
+            } 
         }
 
     }
