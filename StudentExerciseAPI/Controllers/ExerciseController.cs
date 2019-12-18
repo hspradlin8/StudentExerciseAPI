@@ -49,7 +49,7 @@ namespace StudentExerciseAPI.Controllers
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Name = reader.GetString(reader.GetOrdinal("Name")),
                             Language = reader.GetString(reader.GetOrdinal("Language")),
-                            
+
 
                         };
 
@@ -62,37 +62,70 @@ namespace StudentExerciseAPI.Controllers
             }
         }
 
-        [HttpGet("{id}", Name = "GetExercise")]
-        public async Task<IActionResult> Get([FromRoute] int id)
+        [HttpGet]
+        public async Task<IActionResult> Get([FromQuery]int Id, string include)
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"
-                        SELECT
-                            Id, Name, Language
-                        FROM Exercise
-                        WHERE Id = @id";
-                    cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                    List<Exercise> exercises = new List<Exercise>();
+                    // if they are looking for students 
+                    if (include != null)
+
+                    {
+                        cmd.CommandText = @"SELECT s.FirstName, s.LastName, s.Id, se.Id, se.StudentId, se.ExerciseId, e.[Name], e.Id, e.[Language]
+                                            FROM StudentExercise se
+                                            LEFT JOIN Student s ON s.Id = se.StudentId
+                                            LEFT JOIN Exercise e ON e.Id = se.ExerciseId;";
+
+                    }
+                    else
+                    {
+                        //does not include students 
+                        cmd.CommandText = @"SELECT  se.Id, se.StudentId, se.ExerciseId, e.[Name], e.Id, e.[Language]
+                                            FROM StudentExercise se
+                                            LEFT JOIN Exercise e ON e.Id = se.ExerciseId;";
+
+                    }
                     SqlDataReader reader = cmd.ExecuteReader();
 
-                    Exercise exercise = null;
+                    //List<Student> this is where we are storing all of the exercises from the sql statement
 
-                    if (reader.Read())
+                        List<Student> students = new List<Student>();
+
+                    while (reader.Read())
                     {
-                        exercise = new Exercise
+                        if (include != null)
+                        {
+                            Student student = new Student
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                SlackHandle = reader.GetString(reader.GetOrdinal("SlackHandle")),
+                                CohortId = reader.GetInt32(reader.GetOrdinal("CohortId")),
+                            };
+                            students.Add(student);
+                        }
+                        Exercise exercise = new Exercise
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            Name = reader.GetString(reader.GetOrdinal("ExerciseName")),
                             Language = reader.GetString(reader.GetOrdinal("Language")),
 
+
+                            //this is considered all of the student exercises they are currently working on
+                            Student = students
                         };
+
+                        exercises.Add(exercise);
                     }
                     reader.Close();
 
-                    return Ok(exercise);
+                    return Ok(students);
                 }
             }
         }
@@ -213,6 +246,6 @@ namespace StudentExerciseAPI.Controllers
         }
     }
 }
-    
-    
+
+
 
