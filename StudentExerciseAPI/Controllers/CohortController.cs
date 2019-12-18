@@ -32,7 +32,7 @@ namespace CoffeeShop.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery]string q)
+        public async Task<IActionResult> Get([FromQuery]string Name)
         {
             using (SqlConnection conn = Connection)
             {
@@ -48,7 +48,13 @@ namespace CoffeeShop.Controllers
                                         FROM Cohort c
                                         LEFT JOIN Student s ON c.Id = s.Id
                                         LEFT JOIN Instructor i ON c.Id = i.CohortId
-                                        WHERE Cohort LIKE q";
+                                        WHERE 1=1";
+
+                    if (Name != null)
+                    {
+                        cmd.CommandText += " AND [Name] LIKE @Name";
+                        cmd.Parameters.Add(new SqlParameter("@Name", "%" + Name + "%"));
+                    }
                     SqlDataReader reader = cmd.ExecuteReader();
                     List<Cohort> cohorts = new List<Cohort>();
 

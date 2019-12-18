@@ -31,14 +31,30 @@ namespace StudentExerciseAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] string Language, string Name)
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT Id, Name, Language FROM Exercise";
+                    cmd.CommandText = @"SELECT Id, Name, Language 
+                                        FROM Exercise
+                                        WHERE 1=1";
+
+                    if (Language != null)
+                    {
+                        cmd.CommandText += " AND [Language] LIKE @Language";
+                        cmd.Parameters.Add(new SqlParameter("@Language", "%" + Language + "%"));
+                    }
+
+                    if (Name != null)
+                    {
+                        cmd.CommandText += " AND [Name] LIKE @Name";
+                        cmd.Parameters.Add(new SqlParameter("@Name", "%" + Name + "%"));
+                    }
+
+                    
                     SqlDataReader reader = cmd.ExecuteReader();
                     List<Exercise> exercise = new List<Exercise>();
 
@@ -62,8 +78,8 @@ namespace StudentExerciseAPI.Controllers
             }
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Get([FromQuery]int Id, string include, string q)
+        [HttpGet("{id}", Name = "GetExercises")]
+        public async Task<IActionResult> Get([FromRoute]int Id, string include)
         {
             using (SqlConnection conn = Connection)
             {
